@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { logAction } from '@/lib/log'
 import DeleteProjectButton from './deleteProjectButton'
+import { revalidatePath } from 'next/cache'
 
 export default async function ProjectPage({ params }) {
   const { id } = await params
@@ -57,6 +58,9 @@ export default async function ProjectPage({ params }) {
     if (error) console.error(error)
 
     await logAction(user.id, 'applied_to_project')
+    
+    revalidatePath(`/project/${id}`)
+    redirect(`/project/${id}`)
 
     // Look up owner + applicant details for the notification
     const { data: owner } = await supabase
@@ -105,7 +109,8 @@ export default async function ProjectPage({ params }) {
       .update({ status })
       .eq('id', applicationId)
     if (error) console.error(error)
-
+      revalidatePath(`/project/${id}`)
+      redirect(`/project/${id}`)
     if (user) {
       await logAction(user.id, `application_${status.toLowerCase()}`)
     }
@@ -133,26 +138,7 @@ export default async function ProjectPage({ params }) {
     await logAction(user.id, 'deleted_project')
     redirect('/')
   }
-  async function withdrawApplication(formData) {
-    'use server'
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/login')
-
-    const applicationId = formData.get('applicationId')
-
-    const { error } = await supabase
-      .from('applications')
-      .delete()
-      .eq('id', applicationId)
-      .eq('applicant_id', user.id)
-
-    if (error) console.error(error)
-
-    await logAction(user.id, 'withdrew_application')
-
-    redirect(`/project/${id}`)
-  }
+  
   return (
     <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
       <h1>{project.title}</h1>
