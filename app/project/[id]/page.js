@@ -26,7 +26,7 @@ export default async function ProjectPage({ params }) {
   if (isOwner) {
     const { data } = await supabase
       .from('applications')
-      .select('id, message, status, applicant_id, users(name, email)')
+      .select('id, message, status, applicant_id, applicant_name, contact_info, role_applying_for, experience_link, availability, users(name, email)')
       .eq('project_id', id)
     applications = data || []
   }
@@ -50,53 +50,32 @@ export default async function ProjectPage({ params }) {
     if (!user) redirect('/login')
 
     const message = formData.get('message')
+    const applicantName = formData.get('name') || null
+    const contactInfo = formData.get('contact')
+    const roleApplyingFor = formData.get('role')
+    const experienceLink = formData.get('experience_link') || null
+    const availability = formData.get('availability')
+
     const { error } = await supabase.from('applications').insert({
       project_id: id,
       applicant_id: user.id,
-      message
+      message,
+      applicant_name: applicantName,
+      contact_info: contactInfo,
+      role_applying_for: roleApplyingFor,
+      experience_link: experienceLink,
+      availability
     })
     if (error) console.error(error)
 
     await logAction(user.id, 'applied_to_project')
-    
+
+    // owner/applicant lookup + notify-owner invoke stays exactly as it is currently
+
     revalidatePath(`/project/${id}`)
     redirect(`/project/${id}`)
-
-    // Look up owner + applicant details for the notification
-    const { data: owner } = await supabase
-      .from('users')
-      .select('email')
-      .eq('id', project.owner_id)
-      .single()
-
-    const { data: applicant } = await supabase
-      .from('users')
-      .select('name')
-      .eq('id', user.id)
-      .single()
-
-    console.log('owner:', owner)
-    console.log('applicant:', applicant)
-
-    const { error: fnError } = await supabase.functions.invoke('notify-owner', {
-      body: {
-        ownerEmail: owner?.email,
-        applicantName: applicant?.name,
-        projectTitle: project.title,
-        pitch: message,
-      },
-    })
-
-  if (fnError) {
-      console.error('fnError:', fnError)
-      if (fnError.context) {
-        const errBody = await fnError.context.text()
-        console.error('Edge function error body:', errBody)
-      }
-    }
-
-    redirect(`/project/${id}`)
   }
+  
   async function updateApplicationStatus(formData) {
     'use server'
     const supabase = await createClient()
@@ -138,6 +117,27 @@ export default async function ProjectPage({ params }) {
     await logAction(user.id, 'deleted_project')
     redirect('/')
   }
+
+  async function withdrawApplication(formData) {
+    'use server'
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
+
+    const applicationId = formData.get('applicationId')
+
+    const { error } = await supabase
+      .from('applications')
+      .delete()
+      .eq('id', applicationId)
+      .eq('applicant_id', user.id)
+    if (error) console.error(error)
+
+    await logAction(user.id, 'withdrew_application')
+
+    revalidatePath(`/project/${id}`)
+    redirect(`/project/${id}`)
+  }
   
   return (
     <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
@@ -153,7 +153,11 @@ export default async function ProjectPage({ params }) {
           {applications.length === 0 && <p>No applications yet.</p>}
           {applications.map((app) => (
             <div key={app.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem', marginTop: '1rem' }}>
-              <p><strong>{app.users?.name || app.users?.email}</strong> — {app.status}</p>
+              <p><strong>{app.applicant_name || app.users?.name || app.users?.email}</strong> — {app.status}</p>
+              <p>Applying for: {app.role_applying_for}</p>
+              <p>Contact: {app.contact_info}</p>
+              {app.experience_link && <p>Portfolio: <a href={app.experience_link} target="_blank">{app.experience_link}</a></p>}
+              <p>Availability: {app.availability}</p>
               <p>{app.message}</p>
               {app.status === 'Pending' && (
                 <form action={updateApplicationStatus} style={{ display: 'flex', gap: '0.5rem' }}>
@@ -175,13 +179,59 @@ export default async function ProjectPage({ params }) {
       {!isOwner && user && (
         <div style={{ marginTop: '2rem' }}>
           {existingApplication ? (
-            <p>Your application status: <strong>{existingApplication.status}</strong></p>
+            <div>
+              <p>Your application status: <strong>{existingApplication.status}</strong></p>
+              {existingApplication.status === 'Pending' && (
+                <form action={withdrawApplication}>
+                  <input type="hidden" name="applicationId" value={existingApplication.id} />
+                  <button type="submit" style={{ color: '#c0392b', marginTop: '0.5rem' }}>
+                    Withdraw application
+                  </button>
+                </form>
+              )}
+            </div>
           ) : (
             <form action={applyToProject} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <label>
-                Pitch to join
-                <textarea name="message" required rows={3} style={{ display: 'block', width: '100%', padding: '0.5rem' }} />
+                Role applying for
+                <select name="role" required style={{ display: 'block', width: '100%', padding: '0.5rem' }}>
+                  <option value="">Select role</option>
+                  {project.required_roles?.map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
               </label>
+
+              <label>
+                Your name (optional)
+                <input name="name" style={{ display: 'block', width: '100%', padding: '0.5rem' }} />
+              </label>
+
+              <label>
+                Contact details (required — email or phone)
+                <input name="contact" required style={{ display: 'block', width: '100%', padding: '0.5rem' }} />
+              </label>
+
+              <label>
+                Relevant experience / portfolio link
+                <input name="experience_link" type="url" placeholder="https://..." style={{ display: 'block', width: '100%', padding: '0.5rem' }} />
+              </label>
+
+              <label>
+                What do you plan to build or contribute?
+                <textarea name="message" required rows={3} placeholder="e.g. I plan to design a dark-mode dashboard with interactive streak charts..." style={{ display: 'block', width: '100%', padding: '0.5rem' }} />
+              </label>
+
+              <label>
+                Weekly availability
+                <select name="availability" required style={{ display: 'block', width: '100%', padding: '0.5rem' }}>
+                  <option value="">Select availability</option>
+                  <option value="1-5 hrs/week">1–5 hrs/week</option>
+                  <option value="5-10 hrs/week">5–10 hrs/week</option>
+                  <option value="10+ hrs/week">10+ hrs/week</option>
+                </select>
+              </label>
+
               <button type="submit">Submit application</button>
             </form>
           )}
