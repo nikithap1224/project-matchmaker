@@ -133,7 +133,26 @@ export default async function ProjectPage({ params }) {
     await logAction(user.id, 'deleted_project')
     redirect('/')
   }
+  async function withdrawApplication(formData) {
+    'use server'
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
 
+    const applicationId = formData.get('applicationId')
+
+    const { error } = await supabase
+      .from('applications')
+      .delete()
+      .eq('id', applicationId)
+      .eq('applicant_id', user.id)
+
+    if (error) console.error(error)
+
+    await logAction(user.id, 'withdrew_application')
+
+    redirect(`/project/${id}`)
+  }
   return (
     <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
       <h1>{project.title}</h1>
