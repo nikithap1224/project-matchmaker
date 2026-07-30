@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { logAction } from '@/lib/log'
+import DeleteProjectButton from './deleteProjectButton'
 
 export default async function ProjectPage({ params }) {
   const { id } = await params
@@ -112,6 +113,27 @@ export default async function ProjectPage({ params }) {
     redirect(`/project/${id}`)
   }
 
+  async function deleteProject(formData) {
+    'use server'
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
+
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id)
+      .eq('owner_id', user.id)
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    await logAction(user.id, 'deleted_project')
+    redirect('/')
+  }
+
   return (
     <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
       <h1>{project.title}</h1>
@@ -141,6 +163,7 @@ export default async function ProjectPage({ params }) {
               )}
             </div>
           ))}
+          <DeleteProjectButton deleteAction={deleteProject} />
         </div>
       )}
 
