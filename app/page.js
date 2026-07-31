@@ -36,7 +36,7 @@ export default async function HomePage() {
           <Link
             key={project.id}
             href={`/project/${project.id}`}
-            style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem', textDecoration: 'none', color: 'inherit' }}
+            style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem', textDecoration: 'none', color: 'inherit', display: 'block' }}
           >
             <h3>{project.title}</h3>
             <p>{project.description}</p>
