@@ -13,7 +13,7 @@ export default async function HomePage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+    <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Project Matchmaker</h1>
         {user ? (

@@ -140,7 +140,7 @@ export default async function ProjectPage({ params }) {
   }
   
   return (
-    <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
+    <div >
       <h1>{project.title}</h1>
       <p style={{ color: '#666' }}>
         Status: {project.status} · Roles needed: {project.required_roles?.join(', ') || 'Not specified'}

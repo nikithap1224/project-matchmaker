@@ -46,7 +46,7 @@ export default async function PostIdeaPage() {
   }
   
   return (
-    <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+    <div >
       <h1>Post a new idea</h1>
       <form action={createProject} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <label>

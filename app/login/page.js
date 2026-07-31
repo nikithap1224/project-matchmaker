@@ -18,7 +18,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div >
       <h1>Project Matchmaker</h1>
       <button onClick={handleLogin}>Sign in with Google</button>
     </div>
