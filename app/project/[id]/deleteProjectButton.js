@@ -10,7 +10,7 @@ export default function DeleteProjectButton({ deleteAction }) {
         }
       }}
     >
-      <button type="submit" style={{ color: '#c0392b', marginTop: '1rem' }}>
+      <button className="btn-danger" type="submit" style={{ color: '#c0392b', marginTop: '1rem' }}>
         Delete project
       </button>
     </form>

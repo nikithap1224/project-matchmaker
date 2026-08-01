@@ -19,7 +19,7 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button onClick={toggleTheme} style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
+    <button onClick={toggleTheme} className="theme-toggle" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
       {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
     </button>
   )

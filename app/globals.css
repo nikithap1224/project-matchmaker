@@ -86,3 +86,28 @@ button:hover {
   border-color: var(--accent);
   background: var(--surface-hover);
 }
+
+.btn-danger {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid #7f1d1d;
+}
+
+.btn-danger:hover {
+  background: #2a1010;
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
+.theme-toggle {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-weight: 400;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--accent);
+}
