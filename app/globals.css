@@ -1,3 +1,5 @@
+
+
 :root {
   --bg: #13091f;
   --surface: #1e1130;
@@ -10,7 +12,20 @@
   --accent-text: #ffffff;
 }
 
-* {
+[data-theme="light"] {
+  --bg: #faf7fd;
+  --surface: #ffffff;
+  --surface-hover: #f3ecfb;
+  --border: #e0d4f0;
+  --text: #1e1130;
+  --text-muted: #6b5a85;
+  --accent: #9333ea;
+  --accent-hover: #7c22cf;
+  --accent-text: #ffffff;
+}
+
+
+*{
   box-sizing: border-box;
 }
 
@@ -18,6 +33,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, sans-serif;
+  transition: background 0.2s, color 0.2s;
   margin: 0;
 }
 
