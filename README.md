@@ -51,6 +51,8 @@ This ended up being *less* total work than retrofitting SSR, rate limiting, and 
 
 - Separate tabs that display your projects , projects you applied for and the projects proposed by others
 - The unlocking of another tab which contains the indepth details of the project after the applicant is accepted.
+- Create a base home page again
+- make sure only the titles are visible in the home page when clicked on leads to a new tab with the project idea and then to the project apllication
 - Email notifications on new applications (Supabase Edge Function + Resend)
 - Push notifications via Web Push API
 - Structured logging table for key actions
